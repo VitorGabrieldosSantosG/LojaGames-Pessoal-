@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.Games.Games.Model.UserModel;
 import br.com.Games.Games.Repository.UserRepository;
+import br.com.Games.Games.Util.Utils;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,11 +55,17 @@ public class UserController {
         }
     }
 
-    // TODO: criar funções de atualizar informações do usuário
-    // @PutMapping("/{id}")
-    // public ResponseEntity<?> atualizarUsuario(@RequestBody UserModel userModel, @PathVariable UUID id){
-
-    // }
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizarUsuario(@RequestBody UserModel userModel, @PathVariable UUID id){
+        var user = userRepository.findById(id).orElse(null);
+        if(user == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário não encontrado, tente com outro id");
+        } else {
+            Utils.copyNonNullProperties(userModel, user);
+            var userUpdated = this.userRepository.save(userModel);
+            return ResponseEntity.ok().body(userUpdated);
+        }
+    }
 
     // TODO: criar funções de deletar usuário
     // @DeleteMapping("/{id}")
