@@ -1,16 +1,22 @@
 package br.com.Games.Games.Controller;
 
+import java.beans.Beans;
 import java.util.UUID;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
+import br.com.Games.Games.DTO.UserDTO;
 import br.com.Games.Games.Model.UserModel;
 import br.com.Games.Games.Repository.UserRepository;
 import br.com.Games.Games.Util.Utils;
+import ch.qos.logback.core.joran.util.beans.BeanUtil;
+import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,26 +39,22 @@ public class UserController {
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<?> verificarUsuario(@PathVariable UUID id){
-
-        var user = userRepository.findById(id);
-
+    public ResponseEntity<?> buscarUsuario(@PathVariable UUID id){
+        var user = this.userRepository.findById(id).orElse(null);
         if(user != null){
             return ResponseEntity.ok(user);
         } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário não encontrado! \n Tente novamente com outro Id.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário não encontrado!\n Tente novamente com outro Id.");
         }
-
     }
 
+    //Utiliza o Valid com UserDTO para validar se não foram inserido dados nulos
     @PostMapping("")
-    public ResponseEntity<?> criarUsuario(@RequestBody UserModel userModel){
-        var user = userRepository.findByEmail(userModel.getEmail());
-        if(user != null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário com esse email já existe, tente recuperar sua senha!");
-        } else {
-            return ResponseEntity.status(HttpStatus.CREATED).body(userRepository.save(userModel));
-        }
+    public ResponseEntity<?> criarUsuario(@RequestBody @Valid UserDTO userDTO){
+        UserModel userModel = new UserModel();
+        BeanUtils.copyProperties(userDTO, userModel);
+        UserModel user = this.userRepository.save(userModel);
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
     @PutMapping("/{id}")
@@ -67,9 +69,14 @@ public class UserController {
         }
     }
 
-    // TODO: criar funções de deletar usuário
-    // @DeleteMapping("/{id}")
-    // public ResponseEntity deletarUsuario(@PathVariable UUID id){
-
-    // }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletarUsuario(@PathVariable UUID id){
+        var user = this.userRepository.findById(id);
+        if(user != null){
+            this.userRepository.deleteById(id);
+            return ResponseEntity.ok().body("Usuário deletado com sucesso!!");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário não encontrado");
+        }
+    }
 }
