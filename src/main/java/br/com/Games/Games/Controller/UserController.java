@@ -1,6 +1,5 @@
 package br.com.Games.Games.Controller;
 
-import java.beans.Beans;
 import java.util.UUID;
 
 import org.springframework.beans.BeanUtils;
@@ -15,7 +14,6 @@ import br.com.Games.Games.DTO.UserDTO;
 import br.com.Games.Games.Model.UserModel;
 import br.com.Games.Games.Repository.UserRepository;
 import br.com.Games.Games.Util.Utils;
-import ch.qos.logback.core.joran.util.beans.BeanUtil;
 import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -53,6 +51,8 @@ public class UserController {
     public ResponseEntity<?> criarUsuario(@RequestBody @Valid UserDTO userDTO){
         UserModel userModel = new UserModel();
         BeanUtils.copyProperties(userDTO, userModel);
+        var passwordEncrypted = BCrypt.withDefaults().hashToString(12, userModel.getPassword().toCharArray());
+        userModel.setPassword(passwordEncrypted);
         UserModel user = this.userRepository.save(userModel);
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
