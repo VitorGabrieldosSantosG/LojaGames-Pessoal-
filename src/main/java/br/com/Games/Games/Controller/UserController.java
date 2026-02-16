@@ -49,12 +49,20 @@ public class UserController {
     //Utiliza o Valid com UserDTO para validar se não foram inserido dados nulos
     @PostMapping("")
     public ResponseEntity<?> criarUsuario(@RequestBody @Valid UserDTO userDTO){
+        
         UserModel userModel = new UserModel();
         BeanUtils.copyProperties(userDTO, userModel);
-        var passwordEncrypted = BCrypt.withDefaults().hashToString(12, userModel.getPassword().toCharArray());
-        userModel.setPassword(passwordEncrypted);
-        UserModel user = this.userRepository.save(userModel);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+
+        var verifyUserEmail = this.userRepository.findByEmail(userModel.getEmail());
+
+        if(verifyUserEmail != null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário com esse email já existe!");
+        } else {
+            var passwordEncrypted = BCrypt.withDefaults().hashToString(12, userModel.getPassword().toCharArray());
+            userModel.setPassword(passwordEncrypted);
+            UserModel user = this.userRepository.save(userModel);
+            return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        }
     }
 
     @PutMapping("/{id}")
